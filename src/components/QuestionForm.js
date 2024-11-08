@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-function QuestionForm(props) {
+function QuestionForm({ onAddQuestion }) {
   const [formData, setFormData] = useState({
     prompt: "",
     answer1: "",
@@ -19,13 +19,61 @@ function QuestionForm(props) {
 
   function handleSubmit(event) {
     event.preventDefault();
-    console.log(formData);
+
+    // Create an AbortController instance for fetch
+    const controller = new AbortController();
+    const { signal } = controller;
+
+    fetch("http://localhost:4000/questions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: formData.prompt,
+        answers: [
+          formData.answer1,
+          formData.answer2,
+          formData.answer3,
+          formData.answer4,
+        ],
+        correctIndex: parseInt(formData.correctIndex, 10),
+      }),
+      signal, // Attach the signal to the fetch request
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.json();
+      })
+      .then((newQuestion) => {
+        onAddQuestion(newQuestion);
+        // Reset the form after submission
+        setFormData({
+          prompt: "",
+          answer1: "",
+          answer2: "",
+          answer3: "",
+          answer4: "",
+          correctIndex: 0,
+        });
+      })
+      .catch((error) => {
+        if (error.name === "AbortError") {
+          console.log("Fetch aborted"); // Optional: log fetch cancellation
+        } else {
+          console.error("An error occurred:", error);
+        }
+      });
+
+    // Cleanup function to cancel the fetch if component unmounts
+    return () => controller.abort();
   }
 
   return (
     <section>
       <h1>New Question</h1>
       <form onSubmit={handleSubmit}>
+        {/* Form fields */}
         <label>
           Prompt:
           <input
