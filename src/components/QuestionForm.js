@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-function QuestionForm({ onAddQuestion }) {
+function QuestionForm({ addNewQuestion }) {
   const [formData, setFormData] = useState({
     prompt: "",
     answer1: "",
@@ -10,131 +10,107 @@ function QuestionForm({ onAddQuestion }) {
     correctIndex: 0,
   });
 
-  function handleChange(event) {
-    setFormData({
-      ...formData,
-      [event.target.name]: event.target.value,
-    });
-  }
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: name === "correctIndex" ? parseInt(value, 10) : value,
+    }));
+  };
 
-  function handleSubmit(event) {
+  const handleSubmit = (event) => {
     event.preventDefault();
 
-    // Create an AbortController instance for fetch
-    const controller = new AbortController();
-    const { signal } = controller;
-
+    // Send the form data to the API
     fetch("http://localhost:4000/questions", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         prompt: formData.prompt,
-        answers: [
-          formData.answer1,
-          formData.answer2,
-          formData.answer3,
-          formData.answer4,
-        ],
-        correctIndex: parseInt(formData.correctIndex, 10),
+        answers: [formData.answer1, formData.answer2, formData.answer3, formData.answer4],
+        correctIndex: formData.correctIndex,
       }),
-      signal, // Attach the signal to the fetch request
     })
-      .then((response) => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.json();
-      })
+      .then((response) => response.json())
       .then((newQuestion) => {
-        onAddQuestion(newQuestion);
-        // Reset the form after submission
-        setFormData({
-          prompt: "",
-          answer1: "",
-          answer2: "",
-          answer3: "",
-          answer4: "",
-          correctIndex: 0,
-        });
+        // Update the parent component state with the new question
+        addNewQuestion(newQuestion);
       })
-      .catch((error) => {
-        if (error.name === "AbortError") {
-          console.log("Fetch aborted"); // Optional: log fetch cancellation
-        } else {
-          console.error("An error occurred:", error);
-        }
-      });
+      .catch((error) => console.error("Error adding question:", error));
 
-    // Cleanup function to cancel the fetch if component unmounts
-    return () => controller.abort();
-  }
+    // Reset form
+    setFormData({
+      prompt: "",
+      answer1: "",
+      answer2: "",
+      answer3: "",
+      answer4: "",
+      correctIndex: 0,
+    });
+  };
 
   return (
-    <section>
-      <h1>New Question</h1>
-      <form onSubmit={handleSubmit}>
-        {/* Form fields */}
-        <label>
-          Prompt:
-          <input
-            type="text"
-            name="prompt"
-            value={formData.prompt}
-            onChange={handleChange}
-          />
-        </label>
-        <label>
-          Answer 1:
-          <input
-            type="text"
-            name="answer1"
-            value={formData.answer1}
-            onChange={handleChange}
-          />
-        </label>
-        <label>
-          Answer 2:
-          <input
-            type="text"
-            name="answer2"
-            value={formData.answer2}
-            onChange={handleChange}
-          />
-        </label>
-        <label>
-          Answer 3:
-          <input
-            type="text"
-            name="answer3"
-            value={formData.answer3}
-            onChange={handleChange}
-          />
-        </label>
-        <label>
-          Answer 4:
-          <input
-            type="text"
-            name="answer4"
-            value={formData.answer4}
-            onChange={handleChange}
-          />
-        </label>
-        <label>
-          Correct Answer:
-          <select
-            name="correctIndex"
-            value={formData.correctIndex}
-            onChange={handleChange}
-          >
-            <option value="0">{formData.answer1}</option>
-            <option value="1">{formData.answer2}</option>
-            <option value="2">{formData.answer3}</option>
-            <option value="3">{formData.answer4}</option>
-          </select>
-        </label>
-        <button type="submit">Add Question</button>
-      </form>
-    </section>
+    <form onSubmit={handleSubmit}>
+      <label>
+        Prompt:
+        <input
+          type="text"
+          name="prompt"
+          value={formData.prompt}
+          onChange={handleChange}
+        />
+      </label>
+      <label>
+        Answer 1:
+        <input
+          type="text"
+          name="answer1"
+          value={formData.answer1}
+          onChange={handleChange}
+        />
+      </label>
+      <label>
+        Answer 2:
+        <input
+          type="text"
+          name="answer2"
+          value={formData.answer2}
+          onChange={handleChange}
+        />
+      </label>
+      <label>
+        Answer 3:
+        <input
+          type="text"
+          name="answer3"
+          value={formData.answer3}
+          onChange={handleChange}
+        />
+      </label>
+      <label>
+        Answer 4:
+        <input
+          type="text"
+          name="answer4"
+          value={formData.answer4}
+          onChange={handleChange}
+        />
+      </label>
+      <label>
+        Correct Answer:
+        <select
+          name="correctIndex"
+          value={formData.correctIndex}
+          onChange={handleChange}
+        >
+          <option value="0">{formData.answer1}</option>
+          <option value="1">{formData.answer2}</option>
+          <option value="2">{formData.answer3}</option>
+          <option value="3">{formData.answer4}</option>
+        </select>
+      </label>
+      <button type="submit">Add Question</button>
+    </form>
   );
 }
 
