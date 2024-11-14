@@ -31,13 +31,7 @@ function QuestionForm({ addNewQuestion }) {
         correctIndex: formData.correctIndex,
       }),
     })
-      .then((response) => response.json())
-      .then((newQuestion) => {
-        // Update the parent component state with the new question
-        addNewQuestion(newQuestion);
-      })
-      .catch((error) => console.error("Error adding question:", error));
-
+      
     // Reset form
     setFormData({
       prompt: "",
